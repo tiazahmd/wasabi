@@ -10,8 +10,59 @@
 #define WASABI_RL_BUFSIZE 1024
 #define WASABI_TOK_DELIM " \t\r\n\a"
 
-/*** Check this to learn more about execvp 
-     and fork: http://www.cs.ecu.edu/karl/4630/sum01/example1.html ***/
+// Function declarations
+int wasabi_cd(char **args);
+int wasabi_help(char **args);
+int wasabi_exit(char **args);
+
+// Built-in commands and their corresponding functions
+char *builtin_str[] = {
+    "cd",
+    "help",
+    "exit"
+};
+
+int (*builtin_func[]) (char **) = {
+    &wasabi_cd,
+    &wasabi_help,
+    &wasabi_exit
+};
+
+int wasabi_num_builtins() {
+    return sizeof(builtin_str) / sizeof(char *);
+}
+
+// Built-in function implementations
+int wasabi_cd(char **args) {
+    if (args[1] == NULL) {
+        fprintf(stderr, "wasabi: expected argument to \"cd\"\n");
+    }
+    else {
+        if (chdir(args[1]) != 0) {
+            perror("wasabi");
+        }
+    }
+    return 1;
+}
+
+int wasabi_help(char **args) {
+    int i;
+    printf("Imtiaz Ahmed's Wasabi.\n");
+    printf("A small shell writen in C.\n");
+    printf("The following are built-in:\n");
+    
+    for (i = 0; i < wasabi_num_builtins(); i++) {
+        printf(" %s\n", builtin_str[i]);
+    }
+
+    printf("Use the man command for information on other programs.\n");
+    return 1;
+}
+
+int wasabi_exit(char **args) {
+    return 0;
+}
+
 // Launch shell process
 int wasabi_launch(char **args) {
     pid_t pid, wpid;
@@ -36,6 +87,22 @@ int wasabi_launch(char **args) {
         } while (!WIFEXITED(status) && !WIFSIGNALED(status));
     }
     return 1;
+}
+
+// Execute 
+int wasabi_execute(char **args) {
+    int i;
+    
+    if (args[0] == NULL) {
+        return 1;
+    }
+
+    for (i = 0; i < wasabi_num_builtins(); i++) {
+        if (strcmp(args[0], builtin_str[i]) == 0) {
+            return (*builtin_func[i])(args);
+        }
+    }
+    return wasabi_launch(args);
 }
 
 char **wasabi_split_line(char *line) {
@@ -114,7 +181,7 @@ void wasabi_loop(void) {
     do {
         printf("> ");
         line = wasabi_read_line();
-        args = wasabi_split_line();
+        args = wasabi_split_line(line);
         status = wasabi_execute(args);
 
         free(line);
