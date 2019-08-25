@@ -10,6 +10,7 @@
 #include <errno.h>
 
 // Defines
+#define _GNU_SOURCE
 #define WASABI_RL_BUFSIZE 1024
 #define WASABI_PATH_SIZE 1024
 #define WASABI_FOLDER_NAME_LIMIT 1024
@@ -65,7 +66,7 @@ int wasabi_cd(char **args) {
 int wasabi_ls(char **args) {
     struct dirent **filelist;
     int n;
-    n = scandir(".", &filelist, NULL);
+    n = scandir(".", &filelist, NULL, alphasort);
     
     if (n == -1) {
         perror("scandir");
