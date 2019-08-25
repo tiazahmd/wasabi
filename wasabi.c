@@ -138,10 +138,10 @@ int wasabi_rmdir(char **args) {
             printf("Error: Folder not empty.\n");
         }
         else if (errno == ENOTDIR) {
-            printf("Provided name is not a folder.\n");
+            printf("Error: Provided name is not a folder.\n");
         }
         else if (errno == ENOENT) {
-            printf("Folder doesn't exist.\n");
+            printf("Error: Folder doesn't exist.\n");
         }
     }
     
