@@ -8,22 +8,33 @@
 
 // Defines
 #define WASABI_RL_BUFSIZE 1024
+#define WASABI_PATH_SIZE 1024
+#define WASABI_FOLDER_NAME_LIMIT 1024
 #define WASABI_TOK_DELIM " \t\r\n\a"
 
 // Function declarations
 int wasabi_cd(char **args);
+int wasabi_cwd(char **args);
+int wasabi_mkdir(char **args);
+int wasabi_rmdir(char **args);
 int wasabi_help(char **args);
 int wasabi_exit(char **args);
 
 // Built-in commands and their corresponding functions
 char *builtin_str[] = {
     "cd",
+    "cwd",
+    "mkdir",
+    "rmdir",
     "help",
     "exit"
 };
 
 int (*builtin_func[]) (char **) = {
     &wasabi_cd,
+    &wasabi_cwd,
+    &wasabi_mkdir,
+    &wasabi_rmdir,
     &wasabi_help,
     &wasabi_exit
 };
@@ -42,6 +53,59 @@ int wasabi_cd(char **args) {
             perror("wasabi");
         }
     }
+    return 1;
+}
+
+int wasabi_cwd(char **args) {
+    int bufsize = WASABI_PATH_SIZE * sizeof(char);
+    char *buf = malloc(bufsize);
+    
+    // Add functionality: resize buf if exceeds memory.
+    if (getcwd(buf, bufsize) == NULL) {
+        perror("wasabi: something went wrong.");
+    }
+    else {
+        printf("%s\n", buf);
+    }
+
+    free(buf);
+
+    return 1;
+}
+
+int wasabi_mkdir(char **args) {
+    char *foldername = malloc(WASABI_FOLDER_NAME_LIMIT * sizeof(char));
+    foldername = args[1];
+    
+    int bufsize = WASABI_PATH_SIZE * sizeof(char);
+    char *cwd = malloc(bufsize);
+    getcwd(cwd, bufsize);
+
+    char app = '/';
+
+    strcat(cwd, &app);
+    strcat(cwd, foldername);
+
+    mkdir(cwd, 7777);
+    
+    return 1;
+}
+
+int wasabi_rmdir(char **args) {
+    char *foldername = malloc(WASABI_FOLDER_NAME_LIMIT * sizeof(char));
+    foldername = args[1];
+    
+    int bufsize = WASABI_PATH_SIZE * sizeof(char);
+    char *cwd = malloc(bufsize);
+    getcwd(cwd, bufsize);
+
+    char app = '/';
+
+    strcat(cwd, &app);
+    strcat(cwd, foldername);
+
+    rmdir(cwd);
+    
     return 1;
 }
 
