@@ -60,7 +60,7 @@ int wasabi_cwd(char **args) {
     int bufsize = WASABI_PATH_SIZE * sizeof(char);
     char *buf = malloc(bufsize);
     
-    // Add functionality: resize buf if exceeds memory.
+    // Implement functionality: resize buf if exceeds memory.
     if (getcwd(buf, bufsize) == NULL) {
         perror("wasabi: something went wrong.");
     }
@@ -86,6 +86,7 @@ int wasabi_mkdir(char **args) {
     strcat(cwd, &app);
     strcat(cwd, foldername);
 
+    // Implement functionality: Checking if folder name already exists.
     mkdir(cwd, 7777);
     
     return 1;
