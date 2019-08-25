@@ -2,9 +2,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <dirent.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
+#include <errno.h>
 
 // Defines
 #define WASABI_RL_BUFSIZE 1024
@@ -14,6 +17,7 @@
 
 // Function declarations
 int wasabi_cd(char **args);
+int wasabi_ls(char **args);
 int wasabi_cwd(char **args);
 int wasabi_mkdir(char **args);
 int wasabi_rmdir(char **args);
@@ -23,6 +27,7 @@ int wasabi_exit(char **args);
 // Built-in commands and their corresponding functions
 char *builtin_str[] = {
     "cd",
+    "ls",
     "cwd",
     "mkdir",
     "rmdir",
@@ -32,6 +37,7 @@ char *builtin_str[] = {
 
 int (*builtin_func[]) (char **) = {
     &wasabi_cd,
+    &wasabi_ls,
     &wasabi_cwd,
     &wasabi_mkdir,
     &wasabi_rmdir,
@@ -56,6 +62,27 @@ int wasabi_cd(char **args) {
     return 1;
 }
 
+int wasabi_ls(char **args) {
+    struct dirent **filelist;
+    int n;
+    n = scandir(".", &filelist, NULL);
+    
+    if (n == -1) {
+        perror("scandir");
+    }
+
+    while (n--) {
+        if (filelist[n]->d_name[0] != '.') {
+            printf("%s\n", filelist[n]->d_name);
+            free(filelist[n]);
+        } 
+    }
+
+    free(filelist);
+
+    return 1;
+}
+
 int wasabi_cwd(char **args) {
     int bufsize = WASABI_PATH_SIZE * sizeof(char);
     char *buf = malloc(bufsize);
@@ -74,8 +101,6 @@ int wasabi_cwd(char **args) {
 }
 
 int wasabi_mkdir(char **args) {
-    char *foldername = malloc(WASABI_FOLDER_NAME_LIMIT * sizeof(char));
-    foldername = args[1];
     
     int bufsize = WASABI_PATH_SIZE * sizeof(char);
     char *cwd = malloc(bufsize);
@@ -84,17 +109,20 @@ int wasabi_mkdir(char **args) {
     char app = '/';
 
     strcat(cwd, &app);
-    strcat(cwd, foldername);
+    strcat(cwd, args[1]);
 
-    // Implement functionality: Checking if folder name already exists.
-    mkdir(cwd, 7777);
+    if (mkdir(cwd, 77777) == -1) {
+        if (errno == EEXIST) {
+            printf("Error: Folder already exists.\n");
+        }
+    }
+
+    free(cwd);
     
     return 1;
 }
 
 int wasabi_rmdir(char **args) {
-    char *foldername = malloc(WASABI_FOLDER_NAME_LIMIT * sizeof(char));
-    foldername = args[1];
     
     int bufsize = WASABI_PATH_SIZE * sizeof(char);
     char *cwd = malloc(bufsize);
@@ -103,9 +131,21 @@ int wasabi_rmdir(char **args) {
     char app = '/';
 
     strcat(cwd, &app);
-    strcat(cwd, foldername);
+    strcat(cwd, args[1]);
 
-    rmdir(cwd);
+    if (rmdir(cwd) == -1) {
+        if (errno == ENOTEMPTY) {
+            printf("Error: Folder not empty.\n");
+        }
+        else if (errno == ENOTDIR) {
+            printf("Provided name is not a folder.\n");
+        }
+        else if (errno == ENOENT) {
+            printf("Folder doesn't exist.\n");
+        }
+    }
+    
+    free(cwd);
     
     return 1;
 }
